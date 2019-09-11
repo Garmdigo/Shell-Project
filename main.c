@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+//commit
 typedef struct
 {
     char** tokens;
@@ -18,30 +18,30 @@ char *getPrompt(){
     //test with CD command
     char *prompt = malloc(50);
     //memset(prompt, 0, 150);
-    
+
     char *user = malloc(50);
     //memset(user, 0, 25);
     user = getenv("USER");
-    
+
     char *hostname = malloc(50);
     //memset(hostname, 0, 50);
     gethostname(hostname, 50);
-    
-    
+
+
     char *dir = malloc(50);
     //memset(dir, 0, 25);
-    
+
     dir = getenv("PWD");
-    
-    
+
+
     strcat(prompt, user);
     strcat(prompt, "@");
     strcat(prompt, hostname);
     strcat(prompt, ":");
     strcat(prompt, dir);
-    
+
     return prompt;
-    
+
 }
 
 int main() {
