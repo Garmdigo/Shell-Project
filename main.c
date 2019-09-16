@@ -14,6 +14,71 @@ void printTokens(instruction* instr_ptr);
 void clearInstruction(instruction* instr_ptr);
 void addNull(instruction* instr_ptr);
 
+
+char *PATHRes(char *cmd){
+    char *token;
+    char *PATH = getenv("PATH");
+    //char **path = (char **)malloc(20 * sizeof(char *));
+    char *buffer = (char *)malloc(50 * sizeof(char));
+    int x = 0;
+    
+    token = strtok (PATH,":");
+    while (token != NULL)
+    {
+        printf ("%s\n",token);
+        token = strtok (NULL, ":");
+        //path[x] = token;
+        x++;
+        
+        sprintf(buffer, "%s", token);
+        sprintf(buffer + strlen(buffer), "/");
+        sprintf(buffer + strlen(buffer), "%s", cmd);
+        
+        if(access(buffer, X_OK) == 0){
+            return buffer;
+        }
+       
+    }
+    
+    printf("Command not found");
+    return NULL;
+
+    
+
+    //char *command = strcat("/", cmd);
+//    char *PATH = getenv("PATH");
+//    char *p = strdup(PATH);
+//    char *colon = NULL;
+//    char *s = p;
+//
+//    do{
+//        colon = strchr(p, ':');
+//
+//
+//    if (colon != NULL) {
+//        colon[0] = 0;
+//    }
+//
+//        printf("Path in $PATH: %s\n", s);
+//        s = colon + 1;
+//
+////        if(strcmp(strcat(PATH, command), s)){
+////
+////            printf("Found command");
+////
+////        }
+//
+//
+//    }while (colon != NULL);
+//
+//
+//
+//    //printf("%s", PATH);
+//
+//
+//    return PATH;
+}
+
 char *getPrompt(){
     //test with CD command
     char *prompt = malloc(50);
@@ -25,6 +90,7 @@ char *getPrompt(){
     
     char *hostname = malloc(50);
     //memset(hostname, 0, 50);
+    
     gethostname(hostname, 50);
     
     
@@ -44,6 +110,27 @@ char *getPrompt(){
     
 }
 
+void my_execute(char **cmd){
+    //cmd[] ="/bin/ls";
+    int status;
+    pid_t pid = fork();
+    if(pid == -1){
+        //error
+        exit(1);
+    } else if(pid == 0){
+        
+        //child process
+        execv(cmd[0], cmd);
+        printf("Problem executing %s\n", cmd[0]);
+        exit(1);
+    } else{
+        
+        waitpid(pid, &status, 0);
+    }
+    
+    
+}
+
 int main() {
     char* token = NULL;
     char* temp = NULL;
@@ -56,6 +143,7 @@ int main() {
     while (1) {
 
         printf("%s ", getPrompt());
+        PATHRes("ls");
 
         // loop reads character sequences separated by whitespace
         do {
@@ -89,18 +177,26 @@ int main() {
                 temp[i-start] = '\0';
                 addToken(&instr, temp);
             }
+            
+            char *parmList[] = {"/bin/ls", "-l", NULL};
 
+            
+            instr.tokens = parmList;
+            my_execute(instr.tokens);
             //free and reset variables
             free(token);
             free(temp);
 
             token = NULL;
             temp = NULL;
+            
+            
+            
         } while ('\n' != getchar());    //until end of line is reached
 
-        addNull(&instr);
+        //addNull(&instr);
         printTokens(&instr);
-        clearInstruction(&instr);
+        //clearInstruction(&instr);
     }
 
     return 0;
