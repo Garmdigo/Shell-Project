@@ -14,87 +14,77 @@ void printTokens(instruction* instr_ptr);
 void clearInstruction(instruction* instr_ptr);
 void addNull(instruction* instr_ptr);
 
+char *redirectChars = "<>|&";
 
 char *PATHRes(char *cmd){
+    
+    printf("%s", cmd);
     char *token;
-    char *PATH = getenv("PATH");
+    char *p = getenv("PATH");
+    int length = strlen(p) + 1;
+    char *PATH = (char *)malloc(length * sizeof(char));
+    
+    //char **pathList;
+    
+    strcpy(PATH, p);
+    strcat(PATH, ":\0");
+    //make copy of PATH to work on
     //char **path = (char **)malloc(20 * sizeof(char *));
-    char *buffer = (char *)malloc(50 * sizeof(char));
+    char *buffer = (char *)malloc((length + 20) * sizeof(char));
     int x = 0;
     
     token = strtok (PATH,":");
     while (token != NULL)
     {
-        printf ("%s\n",token);
-        token = strtok (NULL, ":");
+        
+        //printf ("%s\n",token);
+        
         //path[x] = token;
         x++;
         
-        sprintf(buffer, "%s", token);
-        sprintf(buffer + strlen(buffer), "/");
-        sprintf(buffer + strlen(buffer), "%s", cmd);
+//        strcat(buffer, token);
+//        strcat(buffer, "/");
+//        strcat(buffer, cmd);
         
+        sprintf(buffer, "%s/%s", token, cmd);
+         //printf("buffer: %s\n", buffer);
+
+        //memset(buffer, 0, strlen(buffer));
+    
         if(access(buffer, X_OK) == 0){
+           //if you dont find it, memset it. Otherwise just use free
+           // memset(buffer, 0, strlen(buffer));
+            printf("buffer: %s\n", buffer);
+            printf("token: %s\n", token);
+            
             return buffer;
-        }
-       
+            
+        } else {buffer[0] = 0;}
+        
+       token = strtok (NULL, ":");
     }
     
     printf("Command not found");
     return NULL;
 
-    
-
-    //char *command = strcat("/", cmd);
-//    char *PATH = getenv("PATH");
-//    char *p = strdup(PATH);
-//    char *colon = NULL;
-//    char *s = p;
-//
-//    do{
-//        colon = strchr(p, ':');
-//
-//
-//    if (colon != NULL) {
-//        colon[0] = 0;
-//    }
-//
-//        printf("Path in $PATH: %s\n", s);
-//        s = colon + 1;
-//
-////        if(strcmp(strcat(PATH, command), s)){
-////
-////            printf("Found command");
-////
-////        }
-//
-//
-//    }while (colon != NULL);
-//
-//
-//
-//    //printf("%s", PATH);
-//
-//
-//    return PATH;
 }
 
 char *getPrompt(){
     //test with CD command
-    char *prompt = malloc(50);
+    char *prompt = calloc(50,sizeof(char));
     //memset(prompt, 0, 150);
 
-    char *user = malloc(50);
+    char *user = calloc(50,sizeof(char));
     //memset(user, 0, 25);
     user = getenv("USER");
 
-    char *hostname = malloc(50);
+    char *hostname = calloc(50,sizeof(char));
     //memset(hostname, 0, 50);
     
     gethostname(hostname, 50);
 
 
-    char *dir = malloc(50);
+    char *dir = calloc(50,sizeof(char));
     //memset(dir, 0, 25);
 
     dir = getenv("PWD");
@@ -112,6 +102,8 @@ char *getPrompt(){
 
 void my_execute(char **cmd){
     //cmd[] ="/bin/ls";
+    char *command = PATHRes(cmd[0]);
+    
     int status;
     pid_t pid = fork();
     if(pid == -1){
@@ -120,7 +112,7 @@ void my_execute(char **cmd){
     } else if(pid == 0){
         
         //child process
-        execv(cmd[0], cmd);
+        execv(command, cmd);
         printf("Problem executing %s\n", cmd[0]);
         exit(1);
     } else{
@@ -143,7 +135,7 @@ int main() {
     while (1) {
 
         printf("%s ", getPrompt());
-        PATHRes("ls");
+        //PATHRes("ls");
 
         // loop reads character sequences separated by whitespace
         do {
@@ -178,10 +170,10 @@ int main() {
                 addToken(&instr, temp);
             }
             
-            char *parmList[] = {"/bin/ls", "-l", NULL};
+//            char *parmList[] = {"/bin/ls", "-l", NULL};
 
             
-            instr.tokens = parmList;
+            //instr.tokens = parmList;
             my_execute(instr.tokens);
             //free and reset variables
             free(token);
@@ -194,9 +186,9 @@ int main() {
             
         } while ('\n' != getchar());    //until end of line is reached
 
-        //addNull(&instr);
+        addNull(&instr);
         printTokens(&instr);
-        //clearInstruction(&instr);
+        clearInstruction(&instr);
     }
 
     return 0;
