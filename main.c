@@ -15,6 +15,199 @@ void clearInstruction(instruction* instr_ptr);
 void addNull(instruction* instr_ptr);
 
 char *redirectChars = "<>|&";
+char *builtins = "|cd|exit|echo|alias|unalias"; //cd:1, exit:4, echo:9, alias:11, unalias:17
+int builtinsIndices[] = {1,4,9,14,20};
+char *ALIAS[10];
+
+typedef struct
+{
+    int pid;
+    char *token;
+} Background;
+Background backgroundProcesses[10];
+int backgroundCounter;
+
+
+void popToken(instruction* instr_ptr)
+{
+    //pop the last token
+    if (instr_ptr->numTokens > 0) {
+        int i = instr_ptr->numTokens - 1;
+        char *out = (instr_ptr->tokens)[i];
+        printf("popping %s\n", out);
+        free(out);
+        (instr_ptr->tokens)[i] = NULL;
+        //instr_ptr->tokens = (char**)realloc(instr_ptr->tokens, i * sizeof(char*));
+        instr_ptr->numTokens = i;
+        
+        }
+}
+
+//void alias(){
+//
+//
+//}
+//
+//void InRedir(char * before,char *after)
+//{
+//    int fd= open(before,O_RDONLY);
+//    if(fork()==0)
+//    {
+//        close (STDIN_FILENO);
+//        dup(fd);
+//        close(fd);
+//        //execute
+//    }
+//    else
+//    {
+//        close (fd);
+//    }
+//}
+//void OutRedir(char * before,char *after)
+//{
+//    int fd=open(before,O_RDONLY|O_CREAT|O_TRUNC);
+//    if (fork()==0)
+//    {
+//        close(STDOUT_FILENO);
+//        dup(fd);
+//        close(fd);
+//        //execute
+//        exit(fd);
+//    }
+//    else
+//    {
+//        close(fd);
+//    }
+//}
+//
+//void piping(char * before,char *after, int c_pipe)
+//{
+//    int fd[2];
+//
+//    if (fork()==0)
+//    {
+//        if(c_pipe==1) //single pipeline
+//        {
+//            pipe(fd);
+//            if(fork()==0)
+//            {
+//                close (STDOUT_FILENO);
+//                dup(fd[1]);
+//                close (fd[0]);
+//                close (fd[1]);
+//                //execute
+//            }
+//            else
+//            {
+//                close(STDIN_FILENO);
+//                dup(fd[0]);
+//                close (fd[0]);
+//                close (fd[1]);
+//                //execute
+//            }
+//        }
+//        else if (c_pipe>1) //multipiping
+//        {
+//            pipe(fd);
+//            if(fork()==0)
+//            {
+//                if(fork()==0)
+//                {
+//
+//                }
+//                close (STDOUT_FILENO);
+//                dup(fd[0]);
+//                close (fd[0]);
+//                close (fd[1]);
+//            }
+//            else
+//            {
+//                close(STDIN_FILENO);
+//                dup(fd[0]);
+//                close (fd[0]);
+//                close (fd[1]);
+//            }
+//        }
+//    }
+//    else
+//    {
+//        close(fd[1]);
+//        close(fd[0]);
+//
+//    }
+//}
+
+
+void cd(char *path){
+    
+    if( chdir(path)==0 )
+    {
+        setenv("PWD", getcwd(NULL,0), 1);
+        
+    } else{
+        printf("invalid directory\n");
+    }
+}
+
+int lastCharacter(char *str, char ch) {
+    int index = -1;
+    int i;
+    for(i = 0; i <= strlen(str); i++)
+        {
+            if(str[i] == ch)
+                {
+                    index = i;
+                    }
+            }
+    return index;
+}
+
+char *dropLastPathComponent(char *pwd) {
+    
+    int last = lastCharacter(pwd, '/');
+    if (last > 0) {
+        pwd[last] = 0;
+    }
+    return pwd;
+}
+
+char*getEnviornment(const char*name)
+{
+    
+    char *v = NULL;
+    char *result = (char *)malloc(100 * sizeof(char));
+    
+    if (name == NULL)
+    {
+        return NULL;
+    }
+    
+    else {
+        if (strcmp(name, "$PATH") == 0){
+            v = getenv( "PATH" );
+            
+        }
+        else if (strcmp(name, "~") == 0){
+            v = getenv( "HOME" );
+            
+        }
+        else if (strcmp(name, "$USER") == 0){
+            v = getenv( "USER" );
+           
+        }
+        else if (strcmp(name, "$SHELL") == 0){
+            v = getenv( "SHELL" );
+            
+        }
+        else if (strcmp(name, "$PWD") == 0){
+            v = getenv( "PWD" );
+            
+        }
+        
+    }
+    strcpy(result, v);
+    return  result;
+}
 
 char *PATHRes(char *cmd){
     
@@ -49,11 +242,10 @@ char *PATHRes(char *cmd){
         sprintf(buffer, "%s/%s", token, cmd);
          //printf("buffer: %s\n", buffer);
 
-        //memset(buffer, 0, strlen(buffer));
+
     
         if(access(buffer, X_OK) == 0){
-           //if you dont find it, memset it. Otherwise just use free
-           // memset(buffer, 0, strlen(buffer));
+
             printf("buffer: %s\n", buffer);
             printf("token: %s\n", token);
             
@@ -100,9 +292,23 @@ char *getPrompt(){
 
 }
 
-void my_execute(char **cmd){
+void my_execute(instruction* instr_ptr){
     //cmd[] ="/bin/ls";
-    char *command = PATHRes(cmd[0]);
+    int no_hang = 0;
+    
+    char *command = PATHRes(instr_ptr->tokens[0]);
+    
+    //strcmp(&cmd[tokenCount][0], "&");
+    
+    
+    
+    if(instr_ptr->numTokens > 1 && instr_ptr->tokens[instr_ptr->numTokens - 1][0] == '&'){
+//        printf("NO HANG: %s\n", cmd[tokenCount - 1]);
+//         printf("NO HANG: %d\n", tokenCount);
+        //instr_ptr->tokens[instr_ptr->numTokens - 1][0] = 0;
+        popToken(instr_ptr);
+        no_hang = 1;
+        }
     
     int status;
     pid_t pid = fork();
@@ -112,15 +318,22 @@ void my_execute(char **cmd){
     } else if(pid == 0){
         
         //child process
-        execv(command, cmd);
-        printf("Problem executing %s\n", cmd[0]);
+        execv(command, instr_ptr->tokens);
+        printf("Problem executing %s\n", instr_ptr->tokens[0]);
         exit(1);
     } else{
-        
+        if(no_hang == 0){
         waitpid(pid, &status, 0);
+        } else if (no_hang == 1){
+          waitpid(pid, &status, WNOHANG);
+            backgroundProcesses[backgroundCounter].pid = pid;
+            backgroundProcesses[backgroundCounter].token = (char *)malloc(sizeof(char) * strlen(instr_ptr->tokens[0])); //free this later
+            strcpy(backgroundProcesses[backgroundCounter].token, instr_ptr->tokens[0]);
+            backgroundCounter++;
+            
+            
+        }
     }
-    
-    
 }
 
 int main() {
@@ -133,8 +346,10 @@ int main() {
 
 
     while (1) {
-
-        printf("%s ", getPrompt());
+        //check if backgroud is done
+        //backgroundcounter-- when done
+        
+        printf("%s: ", getPrompt());
         //PATHRes("ls");
 
         // loop reads character sequences separated by whitespace
@@ -172,9 +387,74 @@ int main() {
             
 //            char *parmList[] = {"/bin/ls", "-l", NULL};
 
+            int p = 0;
+            for(p; p < instr.numTokens; p++){
+                
+                switch ((char)instr.tokens[p]) {
+                    case '&':
+                        //background execution, call with WNOHANG, add to queue
+                        
+                        
+                        break;
+                        
+                    case '~':
+                        //expand to home directory
+                        instr.tokens[p] = getEnviornment("~");
+                        break;
+                    case '.':
+                        if((char)instr.tokens[p][1] == '.'){
+                            char *pwd = getenv("PWD");
+                            char *pwdcpy;
+                            strcpy(pwdcpy, pwd);
+                        instr.tokens[p] = dropLastPathComponent(pwdcpy);
+                        } else {
+                            char *pwd = getenv("PWD");
+                            char *pwdcpy;
+                            strcpy(pwdcpy, pwd);
+                            instr.tokens[p] = pwdcpy;
+                        }
+                   
+                        
+//                    case '':
+//                    default:
+//                        break;
+                }
+                
+            }              //shortcut expansion
             
-            //instr.tokens = parmList;
-            my_execute(instr.tokens);
+            // check for built-in commands
+            int index;
+            if(index = (strstr(builtins, instr.tokens[0]) - builtins)){
+                switch (index) {
+                    case 1:
+                        printf("%s", instr.tokens[1]);
+                        cd(instr.tokens[1]);
+                        break;
+                    
+                    case 4:
+                        
+                        
+                        
+                        break;
+                    case 9:
+                        
+                        break;
+                        
+                    case 14:
+                        
+                        break;
+                        
+                    case 20:
+                        
+                        break;
+                        
+                    default:
+                        break;
+                }
+                
+            }
+            
+            my_execute(&instr);
             //free and reset variables
             free(token);
             free(temp);
@@ -223,6 +503,9 @@ void addNull(instruction* instr_ptr)
     instr_ptr->numTokens++;
 }
 
+void popLastToken(instruction* instr_ptr){
+    
+}
 void printTokens(instruction* instr_ptr)
 {
     int i;
@@ -244,3 +527,8 @@ void clearInstruction(instruction* instr_ptr)
     instr_ptr->tokens = NULL;
     instr_ptr->numTokens = 0;
 }
+
+
+
+
+
