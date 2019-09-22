@@ -18,6 +18,7 @@ char *redirectChars = "<>|&";
 char *builtins = "|cd|exit|echo|alias|unalias"; //cd:1, exit:4, echo:9, alias:11, unalias:17
 int builtinsIndices[] = {1,4,9,14,20};
 char *ALIAS[10];
+int executed = 0;
 
 typedef struct
 {
@@ -30,7 +31,7 @@ int backgroundCounter;
 
 void popToken(instruction* instr_ptr)
 {
-    //pop the last token
+    //pop the last token off
     if (instr_ptr->numTokens > 0) {
         int i = instr_ptr->numTokens - 1;
         char *out = (instr_ptr->tokens)[i];
@@ -41,6 +42,57 @@ void popToken(instruction* instr_ptr)
         instr_ptr->numTokens = i;
         
         }
+}
+
+
+instruction* decompose(instruction* instr_ptr, int *last)
+{
+    //break commands into seperate token lists based on special characters
+    instruction *result = (instruction*) calloc(32,sizeof(instruction));
+    int i, iidx = 0;
+    
+    for (i = 0; i < instr_ptr->numTokens; i++) {
+        char *x = (instr_ptr->tokens)[i];
+        if (x != NULL) {
+            if (strchr(redirectChars, x[0])) {
+                // is a redirect char
+                addToken(&result[++iidx], x);
+                ++iidx;
+                } else {
+                    addToken(&result[iidx], x);
+                    }
+            }
+        }
+    *last = iidx;
+    
+    
+    //// to traverse backwards...
+    //instruction *it;
+    //for (i = *last; i > -1; --i) {
+    //if ((it = &result[i]) != NULL) {
+    ////...
+    //
+    //}
+    //}
+    
+    return result;
+}
+
+void execute_wrapper(instruction* instr){
+    
+    instruction *result = decompose(instr);
+    
+    int j = 0;
+    instruction *it = &result[j];
+    while (it->tokens != NULL){
+        //...
+        printTokens(it);
+        it = &result[++j];
+    }
+    
+    // check if last token &
+    //check for redirects
+    
 }
 
 //void alias(){
@@ -163,7 +215,7 @@ int lastCharacter(char *str, char ch) {
 }
 
 char *dropLastPathComponent(char *pwd) {
-    
+    //
     int last = lastCharacter(pwd, '/');
     if (last > 0) {
         pwd[last] = 0;
@@ -205,13 +257,18 @@ char*getEnviornment(const char*name)
         }
         
     }
+    
+    if(v == NULL){
+        printf("Envionment variable not found\n");
+        return NULL;
+    }
     strcpy(result, v);
     return  result;
 }
 
 char *PATHRes(char *cmd){
     
-    printf("%s", cmd);
+    printf("%s\n", cmd);
     char *token;
     char *p = getenv("PATH");
     int length = strlen(p) + 1;
@@ -246,8 +303,8 @@ char *PATHRes(char *cmd){
     
         if(access(buffer, X_OK) == 0){
 
-            printf("buffer: %s\n", buffer);
-            printf("token: %s\n", token);
+            //printf("buffer: %s\n", buffer);
+            //printf("token: %s\n", token);
             
             return buffer;
             
@@ -256,7 +313,7 @@ char *PATHRes(char *cmd){
        token = strtok (NULL, ":");
     }
     
-    printf("Command not found");
+    printf("Command not found\n");
     return NULL;
 
 }
@@ -295,11 +352,11 @@ char *getPrompt(){
 void my_execute(instruction* instr_ptr){
     //cmd[] ="/bin/ls";
     int no_hang = 0;
-    
     char *command = PATHRes(instr_ptr->tokens[0]);
     
     //strcmp(&cmd[tokenCount][0], "&");
-    
+  
+    //printTokens(instr_ptr);
     
     
     if(instr_ptr->numTokens > 1 && instr_ptr->tokens[instr_ptr->numTokens - 1][0] == '&'){
@@ -385,17 +442,12 @@ int main() {
                 addToken(&instr, temp);
             }
             
-//            char *parmList[] = {"/bin/ls", "-l", NULL};
 
+            //shortcut expansion switch
             int p = 0;
             for(p; p < instr.numTokens; p++){
                 
                 switch ((char)instr.tokens[p]) {
-                    case '&':
-                        //background execution, call with WNOHANG, add to queue
-                        
-                        
-                        break;
                         
                     case '~':
                         //expand to home directory
@@ -403,12 +455,12 @@ int main() {
                         break;
                     case '.':
                         if((char)instr.tokens[p][1] == '.'){
-                            char *pwd = getenv("PWD");
+                            char *pwd = getenv("$PWD");
                             char *pwdcpy;
                             strcpy(pwdcpy, pwd);
                         instr.tokens[p] = dropLastPathComponent(pwdcpy);
                         } else {
-                            char *pwd = getenv("PWD");
+                            char *pwd = getenv("$PWD");
                             char *pwdcpy;
                             strcpy(pwdcpy, pwd);
                             instr.tokens[p] = pwdcpy;
@@ -419,19 +471,40 @@ int main() {
 //                    default:
 //                        break;
                 }
-                
-            }              //shortcut expansion
+                char path[128];
+                if(strchr(instr.tokens[p], '/') != NULL){
+                    if(instr.tokens[p][0] != '/'){
+                        //abs don't do anything
+                        char *pwd = getEnviornment("$PWD");
+                        
+                        sprintf(path, "%s/%s", pwd, instr.tokens[p]);
+                        printf("checking validity of path %s\n", path);
+                        
+                        if(access(path, F_OK) == 0){
+                            instr.tokens[p] = realloc(instr.tokens[p], strlen(path));
+                            strcpy(instr.tokens[p], path);
+                        } else { printf("Path is invalid: %s\n", instr.tokens[p]);}
+                        
+                    }
+                }
+            }
             
             // check for built-in commands
             int index;
+            int status;
             if(index = (strstr(builtins, instr.tokens[0]) - builtins)){
                 switch (index) {
                     case 1:
-                        printf("%s", instr.tokens[1]);
+                        //cd
+                        printf("%s\n", instr.tokens[1]);
                         cd(instr.tokens[1]);
                         break;
                     
                     case 4:
+                        //exit
+                        
+                        waitpid(-1, &status, 0);
+                        printf("Exiting, executed %d commands", executed);
                         
                         
                         
@@ -454,7 +527,7 @@ int main() {
                 
             }
             
-            my_execute(&instr);
+            
             //free and reset variables
             free(token);
             free(temp);
@@ -465,9 +538,10 @@ int main() {
             
             
         } while ('\n' != getchar());    //until end of line is reached
-
-        addNull(&instr);
-        printTokens(&instr);
+        
+        //addNull(&instr);
+        my_execute(&instr);
+        //printTokens(&instr);
         clearInstruction(&instr);
     }
 
