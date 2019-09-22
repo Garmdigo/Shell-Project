@@ -20,12 +20,12 @@ typedef struct
 	char** tokens;
 	int numTokens;
 } instruction;
-typedef struct
-{
-	char * name[10];
-	char * instruction[10];
-} alias;
-void run(instruction * instr_ptr, int c_alias,  alias * name);
+// typedef struct
+// {
+// 	char * name[10];
+// 	char * instruction[10];
+// } alias;
+void run(instruction * instr_ptr, int c_alias, char *store_name[],	char *store_instruction[]);
 void addToken(instruction* instr_ptr, char* tok);
 void printTokens(instruction* instr_ptr);
 void clearInstruction(instruction* instr_ptr);
@@ -38,12 +38,14 @@ void my_execute(char **cmd);
 char *getPrompt();
 char *PATHRes(char *cmd);
 char*getEnviornment(const char*name);
+void echo(const char*name);
 char *redirectChars = "<>|&";
 
 
 int main()
 {
-	alias store_alias;
+	// alias store_alias;
+	// store_alias = (struct alias *) malloc(sizeof(struct alias));
 	//  for(a;a<11;a++)
 	//  {
 	// 		 store_alias.name[a]="";
@@ -60,6 +62,10 @@ int main()
     int valid = 0; //checks if the command is valid
     int c_pipe = 0; //tracks the amount of pipes
 			int correct=0;
+			char *store_name;
+			char *store_instruction;
+			store_name = (char *) malloc(10);
+					store_instruction = (char *) malloc(10);
 		// loop reads character sequences separated by whitespace
 		do {
 			//scans for next token and allocates token var to size of scanned token
@@ -85,13 +91,6 @@ int main()
           start = i + 1;
            if (token[i] == '|') // checks if it is a multiple pipeline
           c_pipe++;
-        //   else if (token[i] == '>')
-        //     c_input++;
-        // else if (token[i] == '<')
-        //   c_output++;
-        // else if (token[i] == '&')
-        //   c_and++;
-				// }
 
 			}
 		}
@@ -115,7 +114,7 @@ int main()
 		if(valid) //checks if it passed the error checking
 		{
 			 correct++;
-				run(&instr,c_alias,&store_alias);
+				run(&instr,c_alias,store_name,store_instruction);
 				c_alias++;
 		}
 		else
@@ -126,6 +125,7 @@ int main()
 		//printTokens(&instr);
 		clearInstruction(&instr);
 	}
+	// free(store_alias);
 
 	return 0;
 }
@@ -168,7 +168,7 @@ void printTokens(instruction* instr_ptr)
 			printf("%s\n", (instr_ptr->tokens)[i]);
 	}
 }
-void run(instruction * instr_ptr, int c_alias, alias * ali)
+void run(instruction * instr_ptr, int c_alias,	char *store_name[], char *store_instruction[])
 {
 	int i;
 
@@ -198,10 +198,13 @@ void run(instruction * instr_ptr, int c_alias, alias * ali)
 					}
 					else if (strcmp(instr_ptr->tokens[i], "alias")==0)
 					{
+						if(c_alias+1<11)
+						{
 						char *string;
 						string=instr_ptr->tokens[i+1];
   					char *p,*q;
   					p = strtok (string,"=");
+
 
   					while (p!= NULL)
   					{
@@ -211,11 +214,9 @@ void run(instruction * instr_ptr, int c_alias, alias * ali)
 					printf ("count%d\n",c_alias);
 						break;
   					}
-						if(c_alias+1<11)
-						{
-							strcpy(ali->name[c_alias],p);
-									strcpy(ali->instruction[c_alias],q);
-										printf ("Name%s\nInstruction%s\n",ali->name[c_alias],ali->instruction[c_alias]);
+							strcpy(store_name[c_alias],p);
+							//		strcpy(store_instruction[c_alias],q);
+								//		printf ("Name%s\nInstruction%s\n",store_name[c_alias],store_instruction[c_alias]);
 						}
 						else
 						{
@@ -229,17 +230,7 @@ void run(instruction * instr_ptr, int c_alias, alias * ali)
 					}
 						if (strcmp(instr_ptr->tokens[i], "echo")==0&&instr_ptr->tokens[i+1] != NULL)
 							{
-								;
-								// int k=1;
-								// 	for(k;k<instr_ptr->numTokens;k++)
-								// 	{
-								// 		if ((instr_ptr->tokens)[k] != NULL)
-								// 		{
-								//
- 							 	// 		printf("%s\n",getEnviornment((instr_ptr->tokens)[k]));
-								// 		}
-								//
-								// 	}
+								echo(instr_ptr->tokens[i+1]);
 							}
 							else if(instr_ptr->tokens[i+1] == NULL)
 							{
@@ -551,4 +542,38 @@ char*getEnviornment(const char*name)
     }
     strcpy(result, v);
     return  result;
+}
+void echo(const char*name)
+{
+    char * v;
+
+    if (name == NULL)
+    {
+        printf("%s", name);
+    }
+    else if (name[0] == '$')
+    {
+	printf("%s", name);
+        char * v;
+        if (strcmp(name, "$PATH") == 0)
+            v = getenv( "PATH" );
+        else if (strcmp(name, "$HOME") == 0)
+            v = getenv( "HOME" );
+        else if (strcmp(name, "$USER") == 0)
+            v = getenv( "USER" );
+        else if (strcmp(name, "$SHELL") == 0)
+            v = getenv( "SHELL" );
+        else if (strcmp(name, "$PWD") == 0)
+            v = getenv( "PWD" );
+        else
+        {
+            v = "Error Occurred";
+        }
+            printf("%s", v);
+
+    }
+    else
+    {
+        printf("%s", name);
+    }
 }
