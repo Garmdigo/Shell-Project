@@ -44,6 +44,11 @@ char *redirectChars = "<>|&";
 int main()
 {
 	alias store_alias;
+	//  for(a;a<11;a++)
+	//  {
+	// 		 store_alias.name[a]="";
+	// 		 store_alias.instruction[a]="";
+	// }
 	char* token = NULL;
 	char* temp = NULL;
 	instruction instr;
@@ -54,12 +59,6 @@ int main()
 		printf("%s ", getPrompt());
     int valid = 0; //checks if the command is valid
     int c_pipe = 0; //tracks the amount of pipes
-    // int c_input = 0;
-    // int c_output = 0;
-    // int c_fslash = 0;
-    // int c_and = 0;
-      char * after;
-      char *before;
 			int correct=0;
 		// loop reads character sequences separated by whitespace
 		do {
@@ -117,6 +116,7 @@ int main()
 		{
 			 correct++;
 				run(&instr,c_alias,&store_alias);
+				c_alias++;
 		}
 		else
 		{
@@ -168,9 +168,10 @@ void printTokens(instruction* instr_ptr)
 			printf("%s\n", (instr_ptr->tokens)[i]);
 	}
 }
-void run(instruction * instr_ptr, int c_alias, alias * name)
+void run(instruction * instr_ptr, int c_alias, alias * ali)
 {
 	int i;
+
 	for (i = 0; i < instr_ptr->numTokens; i++)
 	{
 		if ((instr_ptr->tokens)[i] != NULL)
@@ -200,7 +201,6 @@ void run(instruction * instr_ptr, int c_alias, alias * name)
 						char *string;
 						string=instr_ptr->tokens[i+1];
   					char *p,*q;
-  					printf ("String  \"%s\" is split into tokens:\n",string);
   					p = strtok (string,"=");
 
   					while (p!= NULL)
@@ -208,8 +208,19 @@ void run(instruction * instr_ptr, int c_alias, alias * name)
     				printf ("%s\n",p);
     			  q= strtok (NULL, "'");
 						printf ("%s\n",q);
+					printf ("count%d\n",c_alias);
 						break;
   					}
+						if(c_alias+1<11)
+						{
+							strcpy(ali->name[c_alias],p);
+									strcpy(ali->instruction[c_alias],q);
+										printf ("Name%s\nInstruction%s\n",ali->name[c_alias],ali->instruction[c_alias]);
+						}
+						else
+						{
+							printf("Alias is full\n");
+						}
 						// printf("hEEEERRE");
 						// char * token=strtok(instr_ptr->tokens[i+1], "=");
 						// char * token2=strtok(instr_ptr->tokens[i+1], "'");
