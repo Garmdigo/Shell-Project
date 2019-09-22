@@ -20,6 +20,8 @@ int builtinsIndices[] = {1,4,9,14,20};
 char *ALIAS[10];
 int executed = 0;
 
+
+
 typedef struct
 {
     int pid;
@@ -75,25 +77,15 @@ instruction* decompose(instruction* instr_ptr, int *last)
     //}
     //}
     
+    //    while (it->tokens != NULL){
+    //        //...
+    //
+    //        printTokens(it);
+    //        it = &result[++j];
+    //    }
     return result;
 }
 
-void execute_wrapper(instruction* instr){
-    
-    instruction *result = decompose(instr);
-    
-    int j = 0;
-    instruction *it = &result[j];
-    while (it->tokens != NULL){
-        //...
-        printTokens(it);
-        it = &result[++j];
-    }
-    
-    // check if last token &
-    //check for redirects
-    
-}
 
 //void alias(){
 //
@@ -189,8 +181,55 @@ void execute_wrapper(instruction* instr){
 //    }
 //}
 
+int ErrorCheck( instruction * instr_ptr )
+{
+    // printf("Entranace%c\n","chr");
+    int i; //for loop
+    for (i = 0; i < instr_ptr->numTokens; i++)
+    {
+        if ((instr_ptr->tokens)[i] != NULL) //checks if null
+        {
+            if (i==0&&(strcmp(instr_ptr->tokens[i], "|")==0
+                       ||strcmp(instr_ptr->tokens[i], "<")==0||strcmp((instr_ptr->tokens)[i], ">")==0
+                       )) //if the first input is valid
+            {
+                if ((instr_ptr->tokens)[1] != NULL)
+                {
+                    if(strcmp(instr_ptr->tokens[i], "&")==0&&(strcmp(instr_ptr->tokens[i+1], "|")==0
+                                                              ||strcmp(instr_ptr->tokens[i+1], "<")==0||strcmp((instr_ptr->tokens)[i+1], ">")==0))
+                        return 0;
+                }
+                return 0;
+            }
+            else if ((strcmp((instr_ptr->tokens)[i], "|")==0 ||strcmp((instr_ptr->tokens)[i], "<")==0||strcmp((instr_ptr->tokens)[i], ">")==0)) //||strcmp((instr_ptr->tokens)[i], "&")==0)
+            {
+                int j=i+1;
+                if(instr_ptr->tokens[j]!=NULL)// checking if the next input is valid or not
+                {
+                    if ((strcmp((instr_ptr->tokens)[j], "|")==0 ||strcmp((instr_ptr->tokens)[j], "<")==0||strcmp((instr_ptr->tokens)[j], ">")==0)) //||strcmp((instr_ptr->tokens)[j], "&")==0)
+                    {
+                        return 0; //its false
+                    }
+                }
+                // else if (strcmp(instr_ptr->tokens[i], "&")==0&&strcmp(instr_ptr->tokens[j], "&")!=0)
+                // {
+                //     return 1;
+                // }
+                else
+                {
+                    return 0; //false
+                }
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    return 1;//true
+}
 
-void cd(char *path){
+void cd(char *path){ //cd funcion
     
     if( chdir(path)==0 )
     {
@@ -349,48 +388,116 @@ char *getPrompt(){
 
 }
 
-void my_execute(instruction* instr_ptr){
+void my_execute(instruction* instr_ptr, int fdi, int fdo){
     //cmd[] ="/bin/ls";
     int no_hang = 0;
     char *command = PATHRes(instr_ptr->tokens[0]);
     
     //strcmp(&cmd[tokenCount][0], "&");
-  
+    
     //printTokens(instr_ptr);
     
     
-    if(instr_ptr->numTokens > 1 && instr_ptr->tokens[instr_ptr->numTokens - 1][0] == '&'){
-//        printf("NO HANG: %s\n", cmd[tokenCount - 1]);
-//         printf("NO HANG: %d\n", tokenCount);
-        //instr_ptr->tokens[instr_ptr->numTokens - 1][0] = 0;
-        popToken(instr_ptr);
-        no_hang = 1;
-        }
+    //if(instr_ptr->numTokens > 1 && instr_ptr->tokens[instr_ptr->numTokens - 1][0] == '&'){
+    ////printf("NO HANG: %s\n", cmd[tokenCount - 1]);
+    ////printf("NO HANG: %d\n", tokenCount);
+    ////instr_ptr->tokens[instr_ptr->numTokens - 1][0] = 0;
+    //popToken(instr_ptr);
+    //no_hang = 1;
+    //}
     
     int status;
     pid_t pid = fork();
     if(pid == -1){
-        //error
+        //in redirection
         exit(1);
-    } else if(pid == 0){
-        
-        //child process
-        execv(command, instr_ptr->tokens);
-        printf("Problem executing %s\n", instr_ptr->tokens[0]);
-        exit(1);
-    } else{
-        if(no_hang == 0){
-        waitpid(pid, &status, 0);
-        } else if (no_hang == 1){
-          waitpid(pid, &status, WNOHANG);
-            backgroundProcesses[backgroundCounter].pid = pid;
-            backgroundProcesses[backgroundCounter].token = (char *)malloc(sizeof(char) * strlen(instr_ptr->tokens[0])); //free this later
-            strcpy(backgroundProcesses[backgroundCounter].token, instr_ptr->tokens[0]);
-            backgroundCounter++;
+        } else if(pid == 0){
+            if (fdi > -1) { //input redirect
+                close (STDIN_FILENO);
+                dup(fdi);
+                close(fdi);
+            }
             
+            if (fdo > -1) { //output redirection
+                close (STDOUT_FILENO);
+                dup(fdo);
+                close(fdo);
+            }
             
+            //child process
+            execv(command, instr_ptr->tokens);
+            printf("Problem executing %s\n", instr_ptr->tokens[0]);
+            exit(1);
+            } else{
+                if(no_hang == 0){
+                    waitpid(pid, &status, 0);
+                    } else if (no_hang == 1){
+                        waitpid(pid, &status, WNOHANG);
+                        backgroundProcesses[backgroundCounter].pid = pid;
+                        backgroundProcesses[backgroundCounter].token = (char *)malloc(sizeof(char) * strlen(instr_ptr->tokens[0])); //free this later
+                        strcpy(backgroundProcesses[backgroundCounter].token, instr_ptr->tokens[0]);
+                        backgroundCounter++;
+                        
+                        
+                        }
+                }
+}
+
+void execute_wrapper(instruction* instr){
+    int last;
+    char *fileName;
+    FILE* in;
+    FILE* out;
+    
+    instruction *result = decompose(instr, &last);
+    
+    int j = 0;
+    instruction *it;
+    
+    
+    //// to traverse backwards...
+    //instruction *it;
+    
+    int fni = -1;
+    int fno = -1;
+    
+    for (j = last; j > -1; --j) {
+        if ((it = &result[j])->tokens != NULL) {
+            printTokens(it);
+            
+            if(strchr(it->tokens[0], '/')){
+                fileName = it->tokens[0];
+                
+            } else if(strlen(it->tokens[0]) > 1) {my_execute(it, fni, fno);}
+            if (it->numTokens == 1) {
+                char tknChar = it->tokens[0][0];
+                switch (tknChar){
+                        
+                    case '<':
+                        in = fopen(fileName, "r");
+                        fni = fileno(in);
+                        fileName = NULL;
+                        break;
+                        
+                    case '>':
+                        out = fopen(fileName, "w");
+                        fno = fileno(out);
+                        fileName = NULL;
+                        break;
+                        
+                    case '|':
+                        
+                        break;
+                }
+            }
         }
+        
     }
+    
+    
+    // check if last token &
+    //check for redirects
+    
 }
 
 int main() {
@@ -404,6 +511,7 @@ int main() {
 
     while (1) {
         //check if backgroud is done
+        
         //backgroundcounter-- when done
         
         printf("%s: ", getPrompt());
@@ -474,7 +582,7 @@ int main() {
                 char path[128];
                 if(strchr(instr.tokens[p], '/') != NULL){
                     if(instr.tokens[p][0] != '/'){
-                        //abs don't do anything
+                        //absolute, don't do anything
                         char *pwd = getEnviornment("$PWD");
                         
                         sprintf(path, "%s/%s", pwd, instr.tokens[p]);
@@ -510,7 +618,13 @@ int main() {
                         
                         break;
                     case 9:
-                        
+                        printTokens(&instr);
+                        //printf("%s\n", instr.tokens[1]);
+                        if(strcmp(instr.tokens[1], "..") == 0){
+                            printf("echo ..\n");
+                        }else if(instr.tokens[1][0] == '$'){
+                        printf("echo %s\n", getEnviornment(instr.tokens[1]));
+                        }
                         break;
                         
                     case 14:
@@ -537,10 +651,16 @@ int main() {
             
             
             
-        } while ('\n' != getchar());    //until end of line is reached
+        } while ('\n' != getchar()); //until end of line is reached
+        
+//        valid=ErrorCheck(&instr); //does the errorchecking
+//        printf("Validity:%d\n",valid);
+//        if(valid) //checks if it passed the error checking
+//        {
+//            correct++;
         
         //addNull(&instr);
-        my_execute(&instr);
+        execute_wrapper(&instr);
         //printTokens(&instr);
         clearInstruction(&instr);
     }
