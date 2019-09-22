@@ -1,2 +1,2 @@
 all:
-	gcc main.c -o Main
+	gcc main.c -o shell
