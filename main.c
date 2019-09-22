@@ -222,15 +222,16 @@ void run(instruction * instr_ptr, int c_alias,	char *store_name[], char *store_i
 						{
 							printf("Alias is full\n");
 						}
-						// printf("hEEEERRE");
-						// char * token=strtok(instr_ptr->tokens[i+1], "=");
-						// char * token2=strtok(instr_ptr->tokens[i+1], "'");
-						// char * token3=strtok(instr_ptr->tokens[i+1], "'");
-						// printf("First:%s\nSecond:%s\nThird:%s\n",token,token2,token3 );
+
 					}
-						if (strcmp(instr_ptr->tokens[i], "echo")==0&&instr_ptr->tokens[i+1] != NULL)
+
+					else	if (strcmp(instr_ptr->tokens[i], "echo")==0&&instr_ptr->tokens[i+1] != NULL)
 							{
-								echo(instr_ptr->tokens[i+1]);
+										int k=i+1;
+
+									for(k;k<instr_ptr->numTokens;k++)
+									echo(instr_ptr->tokens[k]);
+
 							}
 							else if(instr_ptr->tokens[i+1] == NULL)
 							{
@@ -553,7 +554,6 @@ void echo(const char*name)
     }
     else if (name[0] == '$')
     {
-	printf("%s", name);
         char * v;
         if (strcmp(name, "$PATH") == 0)
             v = getenv( "PATH" );
@@ -569,11 +569,11 @@ void echo(const char*name)
         {
             v = "Error Occurred";
         }
-            printf("%s", v);
+            printf("%s ", v);
 
     }
     else
     {
-        printf("%s", name);
+        printf("%s ", name);
     }
 }
