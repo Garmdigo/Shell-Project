@@ -5,5 +5,5 @@ Samuel Parmer: Prompt,Execution, Background Processing, Path Resolution and buil
 Christian:  Shortcut Resolution and built-ins(echo).
 Tar archive info: The tar contains the main.c file and the makefile. The main.c is the main programs tha runs the shell. The makefile compiles the code. The README file will tell the user how to use the program.
 Makefile- type make and it will activate the it. The makefile consist of the gcc compiler command so it can run the code. Type shell to run the program.
-Known bugs: Seg faults for alias
-Unfinished portion: builtins alias
+
+Unfinished portion: alias & unalias, echo (all finished but not implemented in this version), background processes work but shell doesn't print any messages about them.
