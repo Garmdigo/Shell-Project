@@ -191,6 +191,12 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 					// strcpy(cmd1,instr_ptr->tokens[i-1]);
 					// strcpy(cmd2,instr_ptr->tokens[i+1]);
 					}
+					else if (strcmp(instr_ptr->tokens[i], "cd")==0)
+					{
+							 OutRedir(&instr_ptr,i);
+					// strcpy(cmd1,instr_ptr->tokens[i-1]);
+					// strcpy(cmd2,instr_ptr->tokens[i+1]);
+					}
 					else if (strcmp(instr_ptr->tokens[i], "alias")==0)
 					{
 							if(instr_ptr->tokens[i+1]!=NULL)
@@ -314,56 +320,6 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 										}
 										if(IsAlias==0&&strcmp(instr_ptr->tokens[i], "alias")==0)
 										printf("Invalid command\n");
-
-
-					// 	else
-					// 	{
-					//
-					// 		if(instr_ptr->tokens[i-1] != NULL&&strcmp(instr_ptr->tokens[i-1], "alias")!=0)
-					// 		{
-					// 		int t;
-					// 		int IsAlias=0;
-					// 		for (t=0;t<counter;t++)
-					// 		{
-					// 			if(strcmp(instr_ptr->tokens[i],store_name[t])==0)
-					// 			{
-					// 				strcpy(instr_ptr->tokens[i],store_instruction[t]);
-					// 				printf("%s",instr_ptr->tokens[i]);
-					// 				IsAlias=1;
-					// 				break;
-					// 			}
-					// 		}
-					// 		if(IsAlias==0)
-					// 		printf("Invalid comman1d\n");
-					//
-					// 		printf("Invalid comma2212n1d\n");
-					// 	}
-					// 	else
-					// 	{
-					// 		if(instr_ptr->numTokens==1)
-					// 		{
-					// 		int t;
-					// 		int IsAlias=0;
-					// 		for (t=0;t<counter;t++)
-					// 		{
-					// 			if(strcmp(instr_ptr->tokens[i],store_name[t])==0)
-					// 			{
-					// 				strcpy(instr_ptr->tokens[i],store_instruction[t]);
-					// 				printf("%s",instr_ptr->tokens[i]);
-					// 				IsAlias=1;
-					// 				break;
-					// 			}
-					// 		}
-					// 		if(IsAlias==0)
-					// 		printf("Invalid comman1d\n");
-					//
-					// 					printf("Invalid 2121212\n");
-					// 	}
-					// }
-					//
-					// }
-
-						// printf("Enter %s\n",instr_ptr->tokens[i]);
 					}
 
 					}
@@ -371,21 +327,23 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 }
 int ErrorCheck( instruction * instr_ptr )
 {
-    // printf("Entranace%c\n","chr");
   int i; //for loop
   for (i = 0; i < instr_ptr->numTokens; i++)
    {
     if ((instr_ptr->tokens)[i] != NULL) //checks if null
     {
       if (i==0&&(strcmp(instr_ptr->tokens[i], "|")==0
-      ||strcmp(instr_ptr->tokens[i], "<")==0||strcmp((instr_ptr->tokens)[i], ">")==0
+      ||strcmp(instr_ptr->tokens[i], "<")==0||strcmp((instr_ptr->tokens)[i], ">")==0||strcmp((instr_ptr->tokens)[i], "&")==0
       )) //if the first input is valid
       {
 				  if ((instr_ptr->tokens)[1] != NULL)
 					{
-						if(strcmp(instr_ptr->tokens[i], "&")==0&&(strcmp(instr_ptr->tokens[i+1], "|")==0
-	      			||strcmp(instr_ptr->tokens[i+1], "<")==0||strcmp((instr_ptr->tokens)[i+1], ">")==0))
+						if(strcmp(instr_ptr->tokens[i+1], "&")==0||(strcmp(instr_ptr->tokens[i+1], "|")==0
+	      			||strcmp(instr_ptr->tokens[i+1], "<")==0||strcmp((instr_ptr->tokens)[i+1], ">")==0)) //checks if there another special character
 							return 0;
+							if(strcmp(instr_ptr->tokens[i+1], "&")!=0||(strcmp(instr_ptr->tokens[i+1], "|")!=0 //special case for &
+								||strcmp(instr_ptr->tokens[i+1], "<")!=0||strcmp((instr_ptr->tokens)[i+1], ">")!=0))
+								return 1;
 						}
         	return 0;
       }
