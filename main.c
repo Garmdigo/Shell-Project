@@ -190,6 +190,51 @@ void execute_wrapper(instruction* instr){
 //}
 
 
+void echo(const char*name){
+    char * v;
+    
+    if (name == NULL){
+        printf("%s", name);
+    }
+    else if (name[0] == '$'){
+        char * v;
+        name = toupper(name);
+        if (strcmp(name, "$PATH") == 0)
+            v = getenv( "PATH" );
+        else if (strcmp(name, "$HOME") == 0)
+            v = getenv( "HOME" );
+        else if (strcmp(name, "$USER") == 0)
+            v = getenv( "USER" );
+        else if (strcmp(name, "$SHELL") == 0)
+            v = getenv( "SHELL" );
+        else if (strcmp(name, "$PWD") == 0)
+            v = getenv( "PWD" );
+        else if (strcmp(name, "$path") == 0)
+            v = getenv( "PATH" );
+        else if (strcmp(name, "$home") == 0)
+            v = getenv( "HOME" );
+        else if (strcmp(name, "$user") == 0)
+            v = getenv( "USER" );
+        else if (strcmp(name, "$shell") == 0)
+            v = getenv( "SHELL" );
+        else if (strcmp(name, "$pwd") == 0)
+            v = getenv( "PWD" );
+        else if (strcmp(name, "~") == 0)
+            v = getenv( "HOME" );    
+        }
+        else
+        {
+            v = "Error Occurred";
+        }
+            printf("%s ", v);
+
+    }
+    else
+    {
+        printf("%s", name);
+    }
+}
+
 void cd(char *path){
     
     if( chdir(path)==0 )
@@ -510,6 +555,10 @@ int main() {
                         
                         break;
                     case 9:
+                        //echo
+                        int k=i+1;
+                        for(k;k<instr_ptr->numTokens;k++) 
+                            echo(instr_ptr->tokens[k]);
                         
                         break;
                         
