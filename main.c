@@ -195,55 +195,65 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 					{
 							if(instr_ptr->tokens[i+1]!=NULL)
 							{
-						if(counter+1<10)
-						{
-						char *string;
-						string=instr_ptr->tokens[i+1];
-  					char *p,*q;
-  					p = strtok (string,"="); //gets the name
-    			  q= strtok (NULL, "'"); //gets instruction
-
-						if(counter==0)
-						{
-						store_instruction[counter] = (char *) malloc((strlen(p) + 1)*sizeof(char));
-								store_name[counter] = (char *) malloc((strlen(q) + 1)*sizeof(char));
-							strcpy(store_name[counter],p);
-								strcpy(store_instruction[counter],q);
-								int temp=counter+1;
-								*c_alias=temp;
-							}
-							else if (counter>0)
-							{
-
-								int t;
-								bool exist=0;
-								for (t=0;t<counter;t++)
-								{
-									if(strcmp(p,store_name[t])==0)
+								char *string;
+								string=instr_ptr->tokens[i+1];
+								char *p,*q;
+								int a=0;
+								int equal=0;
+								int q1=0;
+								int count=0;
+								int size=strlen(string);
+									for(a;a<size;a++)
 									{
-										printf("Alias already exist\n");
-										exist=1;
-										break;
+										if(string[a] == '=')
+											equal=1;
+										if(string[a] == '\'')
+										{
+											count++;
+											if(count%2==0)
+											q1=1;
+										}
 									}
-								}
-								if(exist==0)
-								{
-									store_instruction[counter] = (char *) malloc((strlen(p) + 1)*sizeof(char));
-										store_name[counter] = (char *) malloc((strlen(q) + 1)*sizeof(char));
-									strcpy(store_name[counter],p);
-										strcpy(store_instruction[counter],q);
-										int temp=counter+1;
-										*c_alias=temp;
-								}
-
-							}
-
-						}
-						else
-						{
-							printf("Alias is full\n");
-						}
-					}
+									if(q1==1&&counter<=10)
+									{
+										p = strtok (string,"="); //gets the name
+    			  				q= strtok (NULL, "'"); //gets instruction
+										if(counter==0)
+										{
+										store_instruction[counter] = (char *) malloc((strlen(p) + 1)*sizeof(char));
+												store_name[counter] = (char *) malloc((strlen(q) + 1)*sizeof(char));
+											strcpy(store_name[counter],p);
+												strcpy(store_instruction[counter],q);
+												int temp=counter+1;
+												*c_alias=temp;
+											}
+											else if (counter>0&&counter+1<=10)
+											{
+												int t;
+												bool exist=0;
+												for (t=0;t<counter;t++)
+												{
+													if(strcmp(p,store_name[t])==0)
+													{
+														printf("Alias already exist\n");
+														exist=1;
+														break;
+													}
+												}
+												if(exist==0)
+												{
+													store_instruction[counter] = (char *) malloc((strlen(p) + 1)*sizeof(char));
+														store_name[counter] = (char *) malloc((strlen(q) + 1)*sizeof(char));
+													strcpy(store_name[counter],p);
+														strcpy(store_instruction[counter],q);
+														int temp=counter+1;
+														*c_alias=temp;
+												}
+											}
+										}
+										else
+											printf("Error: Invalid command\n");
+										}
 					else 	if(instr_ptr->tokens[i+1]==NULL)
 					printf("Invalid command\n");
 
@@ -298,13 +308,12 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 											if(strcmp(instr_ptr->tokens[i],store_name[t])==0)
 											{
 												strcpy(instr_ptr->tokens[i],store_instruction[t]);
-												printf("%s",instr_ptr->tokens[i]);
 												IsAlias=1;
 												break;
 											}
 										}
 										if(IsAlias==0&&strcmp(instr_ptr->tokens[i], "alias")==0)
-										printf("Invalid comman1d\n");
+										printf("Invalid command\n");
 
 
 					// 	else
