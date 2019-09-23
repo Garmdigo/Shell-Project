@@ -8,7 +8,12 @@ Christian:  Shortcut Resolution and built-ins(echo).
 
 Tar archive info: The tar contains the main.c file and the makefile (and this README. The main.c is the c programs that runs the compiles to shell. The makefile compiles the said code. The README file specifies division of labor, how to compile, etc.
 
-Makefile- type make to compile the shell. The makefile consist of the gcc compiler command so it can run the code. Type shell to run the program.
+Makefile- type make to compile the shell. The shell is compiled as such by the makefile:
+
+all:
+	gcc main.c -o shell
+  
+Type "shell" after compilation to run the program.
 
 Bugs, Unfinished sections, notes: 
 Pipes are partially implemetned, you can find our attempt at piping in the code. 
