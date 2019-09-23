@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/param.h>
 //commit
 typedef struct
 {
@@ -15,7 +16,7 @@ void clearInstruction(instruction* instr_ptr);
 void addNull(instruction* instr_ptr);
 
 char *redirectChars = "<>|&";
-char *builtins = "|cd|exit|echo|alias|unalias"; //cd:1, exit:4, echo:9, alias:11, unalias:17
+char *builtins = "||cd|exit|echo|alias|unalias|";
 int builtinsIndices[] = {1,4,9,14,20};
 char *ALIAS[10];
 int executed = 0;
@@ -232,12 +233,13 @@ int ErrorCheck( instruction * instr_ptr )
 void cd(char *path){ //cd funcion
     
     if( chdir(path)==0 )
-    {
-        setenv("PWD", getcwd(NULL,0), 1);
-        
-    } else{
-        printf("invalid directory\n");
-    }
+        {
+            char buff[MAXPATHLEN];
+            setenv("PWD", getcwd(buff, MAXPATHLEN), 1);
+            
+            } else{
+                printf("invalid directory\n");
+                }
 }
 
 int lastCharacter(char *str, char ch) {
@@ -357,6 +359,22 @@ char *PATHRes(char *cmd){
 
 }
 
+char* trimRight(char* s) {
+    
+    int len = strlen(s);
+    if(len == 0) {
+        return s;
+        }
+    
+    char* pos = s + len - 1;
+    while(pos >= s && isspace(*pos)) {
+        *pos = '\0';
+        pos--;
+        }
+    return s;
+}
+
+
 char *getPrompt(){
     //test with CD command
     char *prompt = calloc(50,sizeof(char));
@@ -389,6 +407,16 @@ char *getPrompt(){
 }
 
 void my_execute(instruction* instr_ptr, int fdi, int fdo){
+    char buffer[128];
+    addNull(instr_ptr);
+    printTokens(instr_ptr);
+//    int length = strlen(instr_ptr->tokens[0]);
+//    if((instr_ptr->tokens[0][length] == '\n')){
+    
+    sprintf(buffer, "%s", instr_ptr->tokens[0]);
+//    }
+    
+    printf("%s %d %d\n", instr_ptr->tokens[0], fdi, fdo);
     //cmd[] ="/bin/ls";
     int no_hang = 0;
     char *command = PATHRes(instr_ptr->tokens[0]);
@@ -434,7 +462,7 @@ void my_execute(instruction* instr_ptr, int fdi, int fdo){
                     } else if (no_hang == 1){
                         waitpid(pid, &status, WNOHANG);
                         backgroundProcesses[backgroundCounter].pid = pid;
-                        backgroundProcesses[backgroundCounter].token = (char *)malloc(sizeof(char) * strlen(instr_ptr->tokens[0])); //free this later
+                        backgroundProcesses[backgroundCounter].token = (char *)malloc(sizeof(char) * strlen(instr_ptr->tokens[0] + 1)); //free this later
                         strcpy(backgroundProcesses[backgroundCounter].token, instr_ptr->tokens[0]);
                         backgroundCounter++;
                         
@@ -443,56 +471,91 @@ void my_execute(instruction* instr_ptr, int fdi, int fdo){
                 }
 }
 
-void execute_wrapper(instruction* instr){
+void execute_wrapper(instruction* instr) {
     int last;
     char *fileName;
     FILE* in;
     FILE* out;
+    int pipefds[2];
+    int pipestate = 0;
     
     instruction *result = decompose(instr, &last);
     
     int j = 0;
     instruction *it;
-    
-    
-    //// to traverse backwards...
-    //instruction *it;
+    instruction *delayed = NULL;
     
     int fni = -1;
     int fno = -1;
     
     for (j = last; j > -1; --j) {
         if ((it = &result[j])->tokens != NULL) {
-            printTokens(it);
+            //printTokens(it);
             
             if(strchr(it->tokens[0], '/')){
                 fileName = it->tokens[0];
                 
-            } else if(strlen(it->tokens[0]) > 1) {my_execute(it, fni, fno);}
+                } else if(strlen(it->tokens[0]) > 1) {
+                    // is next a pipe? if so don't execute yet -- delayed.
+                    int m = j -1;
+                    if (m > -1) {
+                        instruction *next = &result[m];
+                        if (next->tokens[0][0] == '|') {
+                            delayed = it;
+                            printf("delayed:");
+                            //printTokens(delayed);
+                            printf("--------");
+                            }
+                        }
+                    
+                    if (delayed == NULL) {
+                        my_execute(it, fni, fno);
+                        }
+                    
+                    }
             if (it->numTokens == 1) {
                 char tknChar = it->tokens[0][0];
                 switch (tknChar){
                         
-                    case '<':
+                        case '<':
                         in = fopen(fileName, "r");
                         fni = fileno(in);
                         fileName = NULL;
                         break;
                         
-                    case '>':
+                        case '>':
                         out = fopen(fileName, "w");
                         fno = fileno(out);
                         fileName = NULL;
                         break;
                         
-                    case '|':
+                        case '|':
                         
+                        if (pipestate == 0) {
+                            
+                            if (pipe(pipefds) == -1 ) {
+                                fprintf(stderr, "Pipe Failed" );
+                                } else {
+                                    // prior command must recieve read end (0) as std in
+                                    fni = pipefds[pipestate];
+                                    
+                                    // now execute delayed command
+                                    my_execute(delayed, fni, fno);
+                                    close(fni);
+                                    delayed = NULL;
+                                    fni = -1;
+                                    
+                                    }
+                            }
+                        
+                        fno = pipefds[++pipestate];
+                        pipestate = 0;
                         break;
+                    }
                 }
             }
-        }
         
-    }
+        }
     
     
     // check if last token &
@@ -521,6 +584,8 @@ int main() {
         do {
             //scans for next token and allocates token var to size of scanned token
             scanf("%ms", &token);
+            trimRight(token);
+            printf("%s\n", token);
             temp = (char*)malloc((strlen(token) + 1) * sizeof(char));
 
             int i;
@@ -550,96 +615,8 @@ int main() {
                 addToken(&instr, temp);
             }
             
-
-            //shortcut expansion switch
-            int p = 0;
-            for(p; p < instr.numTokens; p++){
-                
-                switch ((char)instr.tokens[p]) {
-                        
-                    case '~':
-                        //expand to home directory
-                        instr.tokens[p] = getEnviornment("~");
-                        break;
-                    case '.':
-                        if((char)instr.tokens[p][1] == '.'){
-                            char *pwd = getenv("$PWD");
-                            char *pwdcpy;
-                            strcpy(pwdcpy, pwd);
-                        instr.tokens[p] = dropLastPathComponent(pwdcpy);
-                        } else {
-                            char *pwd = getenv("$PWD");
-                            char *pwdcpy;
-                            strcpy(pwdcpy, pwd);
-                            instr.tokens[p] = pwdcpy;
-                        }
-                   
-                        
-//                    case '':
-//                    default:
-//                        break;
-                }
-                char path[128];
-                if(strchr(instr.tokens[p], '/') != NULL){
-                    if(instr.tokens[p][0] != '/'){
-                        //absolute, don't do anything
-                        char *pwd = getEnviornment("$PWD");
-                        
-                        sprintf(path, "%s/%s", pwd, instr.tokens[p]);
-                        printf("checking validity of path %s\n", path);
-                        
-                        if(access(path, F_OK) == 0){
-                            instr.tokens[p] = realloc(instr.tokens[p], strlen(path));
-                            strcpy(instr.tokens[p], path);
-                        } else { printf("Path is invalid: %s\n", instr.tokens[p]);}
-                        
-                    }
-                }
-            }
             
-            // check for built-in commands
-            int index;
-            int status;
-            if(index = (strstr(builtins, instr.tokens[0]) - builtins)){
-                switch (index) {
-                    case 1:
-                        //cd
-                        printf("%s\n", instr.tokens[1]);
-                        cd(instr.tokens[1]);
-                        break;
-                    
-                    case 4:
-                        //exit
-                        
-                        waitpid(-1, &status, 0);
-                        printf("Exiting, executed %d commands", executed);
-                        
-                        
-                        
-                        break;
-                    case 9:
-                        printTokens(&instr);
-                        //printf("%s\n", instr.tokens[1]);
-                        if(strcmp(instr.tokens[1], "..") == 0){
-                            printf("echo ..\n");
-                        }else if(instr.tokens[1][0] == '$'){
-                        printf("echo %s\n", getEnviornment(instr.tokens[1]));
-                        }
-                        break;
-                        
-                    case 14:
-                        
-                        break;
-                        
-                    case 20:
-                        
-                        break;
-                        
-                    default:
-                        break;
-                }
-                
-            }
+
             
             
             //free and reset variables
@@ -653,14 +630,113 @@ int main() {
             
         } while ('\n' != getchar()); //until end of line is reached
         
+        //shortcut expansion
+        int p = 0;
+        for(p; p < instr.numTokens; p++){
+            
+            switch ((char)instr.tokens[p]) {
+                    
+                case '~':
+                    //expand to home directory
+                    instr.tokens[p] = getEnviornment("~");
+                    break;
+                case '.':
+                    if((char)instr.tokens[p][1] == '.'){
+                        char *pwd = getenv("$PWD");
+                        char *pwdcpy;
+                        strcpy(pwdcpy, pwd);
+                        instr.tokens[p] = dropLastPathComponent(pwdcpy);
+                    } else { // case of ..
+                        char *pwd = getenv("$PWD");
+                        char *pwdcpy;
+                        strcpy(pwdcpy, pwd);
+                        instr.tokens[p] = pwdcpy;
+                    }
+                    
+                    
+                    //                    case '':
+                    //                    default:
+                    //                        break;
+            }
+            
+            char path[128];
+            if(strchr(instr.tokens[p], '/') != NULL){
+                if(instr.tokens[p][0] != '/'){
+                    //absolute, don't do anything
+                    char *pwd = getEnviornment("$PWD");
+                    
+                    sprintf(path, "%s/%s", pwd, instr.tokens[p]);
+                    printf("checking validity of path %s\n", path);
+                    
+                    if(access(path, F_OK) == 0){
+                        instr.tokens[p] = realloc(instr.tokens[p], strlen(path) + 1);
+                        strcpy(instr.tokens[p], path);
+                    } else { printf("Path is invalid: %s\n", instr.tokens[p]);}
+                    
+                }
+            }
+        }
+        
+        // check for built-in commands
+        int index;
+        int status;
+        char key[128];
+        
+        sprintf(key, "|%s|", instr.tokens[0]);
+        if((index = (strstr(builtins, key) - builtins)) > 0){
+            //printTokens(&instr)
+            
+            switch (index) {
+                case 1:
+                    //cd
+                    //printf("%s\n", instr.tokens[1]);
+                    if(instr.tokens[1] == NULL){
+                        cd("~");
+                    }
+                    cd(instr.tokens[1]);
+                    break;
+                    
+                case 4:
+                    //exit
+                    
+                    waitpid(-1, &status, 0);
+                    printf("Exiting, executed %d commands", executed);
+                    
+                    
+                    
+                    break;
+                case 9:
+                    
+                    //printf("%s\n", instr.tokens[1]);
+                    if(strcmp(instr.tokens[1], "..") == 0){
+                        printf("echo ..\n");
+                    }else if(instr.tokens[1][0] == '$'){
+                        printf("echo %s\n", getEnviornment(instr.tokens[1]));
+                    }
+                    break;
+                    
+                case 14:
+                    
+                    break;
+                    
+                case 20:
+                    
+                    break;
+                    
+                default:
+                    break;
+            }
+            
+        }else{execute_wrapper(&instr);}
+        
 //        valid=ErrorCheck(&instr); //does the errorchecking
 //        printf("Validity:%d\n",valid);
 //        if(valid) //checks if it passed the error checking
 //        {
 //            correct++;
         
-        //addNull(&instr);
-        execute_wrapper(&instr);
+        
+        
         //printTokens(&instr);
         clearInstruction(&instr);
     }
@@ -706,8 +782,9 @@ void printTokens(instruction* instr_ptr)
     printf("Tokens:\n");
     for (i = 0; i < instr_ptr->numTokens; i++) {
         if ((instr_ptr->tokens)[i] != NULL)
-            printf("%s\n", (instr_ptr->tokens)[i]);
-    }
+            printf("%s|", (instr_ptr->tokens)[i]);
+        }
+    printf(".\n");
 }
 
 void clearInstruction(instruction* instr_ptr)
