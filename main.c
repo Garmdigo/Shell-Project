@@ -109,7 +109,6 @@ int main()
 
 		} while ('\n' != getchar());    //until end of line is reached
     valid=ErrorCheck(&instr); //does the errorchecking
-    printf("Validity:%d\n",valid);
 		if(valid) //checks if it passed the error checking
 		{
 			 correct++;
@@ -290,48 +289,76 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 							{
 								printf("\n"); //if you type echo, it shows  a new line
 							}
-
-						else
-						{
-
-							if(instr_ptr->tokens[i-1] != NULL&&strcmp(instr_ptr->tokens[i-1], "alias")!=0)
+							else
 							{
-							int t;
-							int IsAlias=0;
-							for (t=0;t<counter;t++)
-							{
-								if(strcmp(instr_ptr->tokens[i],store_name[t])==0)
-								{
-									strcpy(instr_ptr->tokens[i],store_instruction[t]);
-									printf("%s",instr_ptr->tokens[i]);
-									IsAlias=1;
-									break;
-								}
-							}
-							if(IsAlias==0)
-							printf("Invalid comman1d\n");
-						}
-						else if(i==0)
-						{
-							int t;
-							for (t=0;t<counter;t++)
-							{
-								if(strcmp(instr_ptr->tokens[0],store_name[t])==0)
-								{
-									strcpy(instr_ptr->tokens[0],store_instruction[t]);
-									printf("%s",instr_ptr->tokens[0]);
-									break;
-								}
-						}
+										int t;
+										int IsAlias=0;
+										for (t=0;t<counter;t++)
+										{
+											if(strcmp(instr_ptr->tokens[i],store_name[t])==0)
+											{
+												strcpy(instr_ptr->tokens[i],store_instruction[t]);
+												printf("%s",instr_ptr->tokens[i]);
+												IsAlias=1;
+												break;
+											}
+										}
+										if(IsAlias==0&&strcmp(instr_ptr->tokens[i], "alias")==0)
+										printf("Invalid comman1d\n");
 
-				}
 
-					}
+					// 	else
+					// 	{
+					//
+					// 		if(instr_ptr->tokens[i-1] != NULL&&strcmp(instr_ptr->tokens[i-1], "alias")!=0)
+					// 		{
+					// 		int t;
+					// 		int IsAlias=0;
+					// 		for (t=0;t<counter;t++)
+					// 		{
+					// 			if(strcmp(instr_ptr->tokens[i],store_name[t])==0)
+					// 			{
+					// 				strcpy(instr_ptr->tokens[i],store_instruction[t]);
+					// 				printf("%s",instr_ptr->tokens[i]);
+					// 				IsAlias=1;
+					// 				break;
+					// 			}
+					// 		}
+					// 		if(IsAlias==0)
+					// 		printf("Invalid comman1d\n");
+					//
+					// 		printf("Invalid comma2212n1d\n");
+					// 	}
+					// 	else
+					// 	{
+					// 		if(instr_ptr->numTokens==1)
+					// 		{
+					// 		int t;
+					// 		int IsAlias=0;
+					// 		for (t=0;t<counter;t++)
+					// 		{
+					// 			if(strcmp(instr_ptr->tokens[i],store_name[t])==0)
+					// 			{
+					// 				strcpy(instr_ptr->tokens[i],store_instruction[t]);
+					// 				printf("%s",instr_ptr->tokens[i]);
+					// 				IsAlias=1;
+					// 				break;
+					// 			}
+					// 		}
+					// 		if(IsAlias==0)
+					// 		printf("Invalid comman1d\n");
+					//
+					// 					printf("Invalid 2121212\n");
+					// 	}
+					// }
+					//
+					// }
 
 						// printf("Enter %s\n",instr_ptr->tokens[i]);
 					}
 
 					}
+				}
 }
 int ErrorCheck( instruction * instr_ptr )
 {
