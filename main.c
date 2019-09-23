@@ -237,7 +237,7 @@ void cd(char *path){ //cd funcion
             char buff[MAXPATHLEN];
             setenv("PWD", getcwd(buff, MAXPATHLEN), 1);
             
-            } else{
+            } else if(strcmp(path, "~") != 0){
                 printf("invalid directory\n");
                 }
 }
@@ -691,9 +691,9 @@ int main() {
                     //cd
                     //printf("%s\n", instr.tokens[1]);
                     if(instr.tokens[1] == NULL){
-                        cd("~");
-                    }
-                    cd(instr.tokens[1]);
+                        cd(getEnviornment("~"));
+                    } else{ cd(instr.tokens[1]); }
+                    
                     break;
                     
                 case 4:
