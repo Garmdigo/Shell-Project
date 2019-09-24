@@ -18,7 +18,7 @@ all:
   
 Type "shell" after compilation to run the program.
 
-Bugs, Unfinished sections, notes: Error checking fails when & cd & is called.
+Bugs, Unfinished sections, notes: 
 
 Pipes are partially implemetned, you can find our attempt at piping in the code. 
 
