@@ -5,7 +5,7 @@ Division of labor:
 
 Samuel Parmer: Prompt, Execution, background Processing, IO redirection, pipes, shortcut resolution, $Path Resolution, and built-ins.
 
-Diego Gutierrez: ReadMe, makefile, IO redirection, pipes and built-ins, error checking.
+Diego Gutierrez: ReadMe, makefile, IO redirection, pipes and built-ins(alias and unalias), error checking.
 
 Christian:  Shortcut Resolution and built-ins(echo).
 
@@ -18,7 +18,7 @@ all:
   
 Type "shell" after compilation to run the program.
 
-Bugs, Unfinished sections, notes:
+Bugs, Unfinished sections, notes: Error checking fails when & cd & is called.
 
 Pipes are partially implemetned, you can find our attempt at piping in the code. 
 
