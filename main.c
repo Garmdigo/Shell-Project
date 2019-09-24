@@ -112,7 +112,7 @@ int main()
 		if(valid) //checks if it passed the error checking
 		{
 			 correct++;
-				run(&instr,&c_alias,store_name,store_instruction);
+			//	run(&instr,&c_alias,store_name,store_instruction);
 		}
 		else
 		{
@@ -176,24 +176,24 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 			{
 				if(strcmp(instr_ptr->tokens[i], "|")==0)
 				{
-					 piping(&instr_ptr,i);
+					// piping(&instr_ptr,i);
 					}
 					else if (strcmp(instr_ptr->tokens[i], "<")==0)
 					{
-									 InRedir(&instr_ptr,i);
+					//				 InRedir(&instr_ptr,i);
 					// strcpy(cmd1,instr_ptr->tokens[i-1]);
 					// strcpy(cmd2,instr_ptr->tokens[i+1]);
 
 						}
 					else if (strcmp(instr_ptr->tokens[i], ">")==0)
 					{
-							 OutRedir(&instr_ptr,i);
+					//		 OutRedir(&instr_ptr,i);
 					// strcpy(cmd1,instr_ptr->tokens[i-1]);
 					// strcpy(cmd2,instr_ptr->tokens[i+1]);
 					}
 					else if (strcmp(instr_ptr->tokens[i], "cd")==0)
 					{
-							 OutRedir(&instr_ptr,i);
+						//	 OutRedir(&instr_ptr,i);
 					// strcpy(cmd1,instr_ptr->tokens[i-1]);
 					// strcpy(cmd2,instr_ptr->tokens[i+1]);
 					}
@@ -209,7 +209,7 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 								int q1=0;
 								int count=0;
 								int size=strlen(string);
-									for(a;a<size;a++)
+									for(a;a<size;a++) //error checker
 									{
 										if(string[a] == '=')
 											equal=1;
@@ -220,7 +220,7 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 											q1=1;
 										}
 									}
-									if(q1==1&&counter<=10)
+									if(q1==1&&counter<=10) //if it valid, it stores it
 									{
 										p = strtok (string,"="); //gets the name
     			  				q= strtok (NULL, "'"); //gets instruction
@@ -239,7 +239,7 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 												bool exist=0;
 												for (t=0;t<counter;t++)
 												{
-													if(strcmp(p,store_name[t])==0)
+													if(strcmp(p,store_name[t])==0) //need to check if it exist
 													{
 														printf("Alias already exist\n");
 														exist=1;
@@ -253,7 +253,7 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 													strcpy(store_name[counter],p);
 														strcpy(store_instruction[counter],q);
 														int temp=counter+1;
-														*c_alias=temp;
+														*c_alias=temp; //store it
 												}
 											}
 										}
@@ -275,7 +275,7 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 						int q=0;
 						if(instr_ptr->tokens[q+1]!=NULL)
 						{
-						for (q; q < 10; q++)
+						for (q; q < 10; q++) //seeing if it exist
 						{
 							if (instr_ptr->tokens[q+1]!=NULL&& strcmp(store_name[q],instr_ptr->tokens[q+1]) == 0){
 								strcpy(store_name[q] ,"");
@@ -315,7 +315,7 @@ void run(instruction * instr_ptr, int *c_alias,	char *store_name[], char *store_
 											{
 												strcpy(instr_ptr->tokens[i],store_instruction[t]);
 												IsAlias=1;
-												break;
+												break; //checks if it an alias
 											}
 										}
 										if(IsAlias==0&&strcmp(instr_ptr->tokens[i], "alias")==0)
@@ -330,47 +330,74 @@ int ErrorCheck( instruction * instr_ptr )
   int i; //for loop
   for (i = 0; i < instr_ptr->numTokens; i++)
    {
+
     if ((instr_ptr->tokens)[i] != NULL) //checks if null
     {
       if (i==0&&(strcmp(instr_ptr->tokens[i], "|")==0
-      ||strcmp(instr_ptr->tokens[i], "<")==0||strcmp((instr_ptr->tokens)[i], ">")==0||strcmp((instr_ptr->tokens)[i], "&")==0
-      )) //if the first input is valid
+      ||strcmp(instr_ptr->tokens[i], "<")==0||strcmp(instr_ptr->tokens[i], ">")==0)) //if the first input is valid
       {
-				  if ((instr_ptr->tokens)[1] != NULL)
-					{
-						if(strcmp(instr_ptr->tokens[i+1], "&")==0||(strcmp(instr_ptr->tokens[i+1], "|")==0
-	      			||strcmp(instr_ptr->tokens[i+1], "<")==0||strcmp((instr_ptr->tokens)[i+1], ">")==0)) //checks if there another special character
-							return 0;
-							if(strcmp(instr_ptr->tokens[i+1], "&")!=0||(strcmp(instr_ptr->tokens[i+1], "|")!=0 //special case for &
-								||strcmp(instr_ptr->tokens[i+1], "<")!=0||strcmp((instr_ptr->tokens)[i+1], ">")!=0))
-								return 1;
-						}
-        	return 0;
+				if ((instr_ptr->tokens)[i+1] == NULL)
+				return 0;
+				if(strcmp(instr_ptr->tokens[i+1], "&")==0 && instr_ptr->tokens[i+1] != NULL)
+				return 0;
+
+
+				return 0;
+				  // if ((instr_ptr->tokens)[1] != NULL)
+					// {
+					// 	if((strcmps(instr_ptr->tokens[i+1], "|")==0 ||strcmp(instr_ptr->tokens[i+1], "<")==0||strcmp((instr_ptr->tokens)[i+1], ">")==0)) //checks if there another special character
+					// 		return 0;
+					// 	}
       }
-     else if ((strcmp((instr_ptr->tokens)[i], "|")==0 ||strcmp((instr_ptr->tokens)[i], "<")==0||strcmp((instr_ptr->tokens)[i], ">")==0)) //||strcmp((instr_ptr->tokens)[i], "&")==0)
+		else	if (i==0&&(strcmp(instr_ptr->tokens[i], "&")==0))
+		{
+			if ((instr_ptr->tokens)[1] != NULL)
+			{
+				if(strcmp(instr_ptr->tokens[i+1], "&")==0||(strcmp(instr_ptr->tokens[i+1], "|")==0
+					||strcmp(instr_ptr->tokens[i+1], "<")==0||strcmp((instr_ptr->tokens)[i+1], ">")==0)) //checks if there another special character
+					return 0;
+					// if(strcmp(instr_ptr->tokens[i+1], "&")!=0||(strcmp(instr_ptr->tokens[i+1], "|")!=0 //special case for &
+					// 	||strcmp(instr_ptr->tokens[i+1], "<")!=0||strcmp((instr_ptr->tokens)[i+1], ">")!=0))
+					// 	return 1;
+				}
+				else 	if ((instr_ptr->tokens)[1] == NULL)
+				return 0;
+		}
+     else if ((strcmp((instr_ptr->tokens)[i], "|")==0 ||strcmp((instr_ptr->tokens)[i], "<")==0||strcmp((instr_ptr->tokens)[i], ">")==0&&strcmp((instr_ptr->tokens)[i], "&")!=0&&i!=0)) //||strcmp((instr_ptr->tokens)[i], "&")==0)
      {
 				int j=i+1;
         if(instr_ptr->tokens[j]!=NULL)// checking if the next input is valid or not
          {
-          if ((strcmp((instr_ptr->tokens)[j], "|")==0 ||strcmp((instr_ptr->tokens)[j], "<")==0||strcmp((instr_ptr->tokens)[j], ">")==0)) //||strcmp((instr_ptr->tokens)[j], "&")==0)
-          {
-          return 0; //its false
+          if ((strcmp((instr_ptr->tokens)[j], "|")==0 ||strcmp((instr_ptr->tokens)[j], "<")==0||strcmp((instr_ptr->tokens)[j], ">")==0)||strcmp((instr_ptr->tokens)[j], "&")==0) //||strcmp((instr_ptr->tokens)[j], "&")==0)
+					return 0; //its false
         }
-        }
-				// else if (strcmp(instr_ptr->tokens[i], "&")==0&&strcmp(instr_ptr->tokens[j], "&")!=0)
-				// {
-				// 	return 1;
-				// }
-        else
+        else if (instr_ptr->tokens[j]==NULL)
         {
           return 0; //false
         }
       }
+			else	if ((strcmp(instr_ptr->tokens[i], "&")==0)&&i!=0)
+			{
+				 if (instr_ptr->tokens[i+1] == NULL)
+				return 1;
+				if ((instr_ptr->tokens)[i+1] != NULL)
+				{
+
+					 // if(strcmp(instr_ptr->tokens[i+1], "&")!=0||(strcmp(instr_ptr->tokens[i+1], "|")!=0
+						// ||strcmp(instr_ptr->tokens[i+1], "<")!=0||strcmp((instr_ptr->tokens)[i+1], ">")!=0))
+						// continue;
+			 	 if(strcmp(instr_ptr->tokens[i+1], "&")==0||strcmp(instr_ptr->tokens[i+1], "|")==0
+						||strcmp(instr_ptr->tokens[i+1], "<")==0||strcmp(instr_ptr->tokens[i+1], ">")==0) //checks if there another special character
+						return 0;
+
+						// if(strcmp(instr_ptr->tokens[i+1], "&")!=0||(strcmp(instr_ptr->tokens[i+1], "|")!=0 //special case for &
+						// 	||strcmp(instr_ptr->tokens[i+1], "<")!=0||strcmp((instr_ptr->tokens)[i+1], ">")!=0))
+						// 	return 1;
+					}
+
+			}
   	}
-    else
-    {
-    return 0;
-  }
+  
   }
 return 1;//true
 }
