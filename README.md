@@ -2,6 +2,7 @@
 Team members: Diego Gutierrez, Samuel Parmer and Christian Gazmuri
 
 Division of labor:
+
 Samuel Parmer: Prompt, Execution, background Processing, IO redirection, pipes, shortcut resolution, $Path Resolution, and built-ins.
 
 Diego Gutierrez: ReadMe, makefile, IO redirection, pipes and built-ins, error checking.
