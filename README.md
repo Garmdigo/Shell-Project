@@ -18,9 +18,10 @@ all:
   
 Type "shell" after compilation to run the program.
 
-Bugs, Unfinished sections, notes: 
+Bugs, Unfinished sections, notes:
+
 Pipes are partially implemetned, you can find our attempt at piping in the code. 
 
-Background processes work but shell doesn't print the completion message for the first process. All proceeding processes print as exected.
+Background processes work but shell doesn't print the completion message for the first process. Proceeding processes print queue postion and pid upon completion. 
 
-alias commands need spaces around the '=,' error checking is minimal.
+alias commands need spaces around the '=' to work. Error checking for alias is minimal.
